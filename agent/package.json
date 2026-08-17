@@ -1,0 +1,24 @@
+{
+  "name": "champz-arena-memory-agent",
+  "version": "0.1.0",
+  "description": "A Virtuals ACP EconomyOS agent that competes in the Champz AI Arena with persistent memory via Sibyl Memory.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@account-kit/infra": "^4.88.5",
+    "@virtuals-protocol/acp-node-v2": "^0.1.11",
+    "dotenv": "^16.4.5",
+    "viem": "^2.55.17"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,6 @@
+fastapi>=0.115.0
+uvicorn>=0.30.0
+# sibyl-memory-cli[mcp] — add once the real programmatic call surface is
+# confirmed (see docs/ARCHITECTURE.md open items). Until then this service
+# runs with an in-memory/file-backed stub so the rest of the pipeline
+# (agent <-> bridge HTTP contract) can be built and tested independently.
