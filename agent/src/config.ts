@@ -18,7 +18,11 @@ export const config = {
 
   virtualsAgentId: process.env.VIRTUALS_AGENT_ID,
 
-  groqApiKey: process.env.GROQ_API_KEY,
+  // OpenRouter — matches the rest of the Champz stack (model: moonshotai/kimi-k2.6).
+  // Loaded from the environment only. .env is gitignored and never committed;
+  // .env.example (which IS committed) only ever has blank placeholders — see
+  // that file's comment for the same rule applied to every other credential.
+  openRouterApiKey: process.env.OPENROUTER_API_KEY,
 };
 
 export function requireRegisteredAgentConfig() {

@@ -222,6 +222,42 @@ export async function getCycleState(apiKey: string): Promise<Record<string, unkn
   return res.json() as Promise<Record<string, unknown>>;
 }
 
+// ── My History — added 2026-08-18, not part of the original runbook ───────
+// Champz-side addition specifically for this hackathon: the agent's own full
+// strategy + purchase + outcome history across every cycle_type='agent'
+// cycle it enrolled in. Needed because the public decisions-public /
+// leaderboard-public endpoints don't cover an agent's own losing cycles —
+// this is the actual data source for the "remember" step. See
+// docs/ARCHITECTURE.md for why this one endpoint was worth the departure
+// from "zero backend changes."
+
+export interface MyHistoryCycle {
+  cycle_id: number;
+  cycle_status: string;
+  enrolled_at: string;
+  strategy_submitted_at: string | null;
+  strategy: ArenaStrategy;
+  decisions: Array<{ decision: string; usdc_price: number; timestamp: string; reason: string | null }>;
+  total_paid: number;
+  won: boolean;
+  hold_duration_seconds: number;
+  reward_earned: number;
+  entry_price: number | null;
+  entry_timing_pct: number | null;
+}
+
+export interface MyHistory {
+  success: boolean;
+  agent: { agent_id: number; agent_name: string; owner_wallet: string; execution_wallet: string };
+  summary: { total_cycles: number; cycles_won: number; total_spent: number; total_earned: number };
+  cycles: MyHistoryCycle[];
+}
+
+export async function getMyHistory(apiKey: string): Promise<MyHistory> {
+  const res = await fetch(url('/my-history'), { headers: authHeaders(apiKey) });
+  return res.json() as Promise<MyHistory>;
+}
+
 // ── Step 8 — claims fallback (rewards are normally automatic) ─────────────
 
 export interface PendingClaim {
