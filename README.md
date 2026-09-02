@@ -41,7 +41,7 @@ The full agent-facing API runbook this client implements is Champz's own `VIRTUA
 
 ## Status
 
-🚧 Work in progress, built during the Sibyl Memory Hackathon build window (Sep 1–10, 2026). See `docs/ARCHITECTURE.md` for current state.
+✅ Built during the Sibyl Memory Hackathon build window (Sep 1–10, 2026). The real memory-informed A/B demo is complete — Cycle 80 (with memory) vs. Cycle 82 (without), run for real on Base and honestly compared. See `docs/ARCHITECTURE.md` for architecture detail; demo video and full writeup links to follow.
 
 ## License
 
