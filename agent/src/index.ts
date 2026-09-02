@@ -2,8 +2,16 @@
  * Entry point. Two modes:
  *   `npm run dev -- register`     one-time: create/load ACP wallet, complete
  *                                  the Champz Arena registration handshake
- *   `npm run dev -- run-cycle`    check upcoming cycle -> enroll if needed ->
- *                                  recall memory -> reason -> submit strategy
+ *   `npm run dev -- prep-cycle`   check upcoming cycle -> enroll if needed ->
+ *                                  recall memory -> print everything needed
+ *                                  to paste into Virtuals chat for reasoning
+ *
+ * Reasoning is deliberately NOT automated here. It happens live, by hand:
+ * this command's printed output (recalled memory + live cycle state) gets
+ * pasted into the Virtuals agent chat, which reasons out a strategy; you
+ * then submit it with `POST /strategy` (see champzArenaClient.ts's
+ * submitStrategy(), called directly via curl in the demo, or from a REPL —
+ * there's no scripted LLM call in this repo to keep in sync with).
  *
  * Funding the execution wallet (runbook Step 4) is a real on-chain transfer,
  * not an HTTP call — currently surfaced as printed instructions (the
@@ -11,8 +19,9 @@
  * wired up yet); see docs/ARCHITECTURE.md, "later" items.
  *
  * Settlement/remember (writing the outcome back to Sibyl once a cycle
- * resolves) is a separate script — see docs/ARCHITECTURE.md — since it runs
- * on its own schedule relative to cycle end, not at agent-startup time.
+ * resolves) is a separate, manual step — see docs/ARCHITECTURE.md and the
+ * Sep 1 demo runbook — since it runs on its own schedule relative to cycle
+ * end, not at agent-startup time, and is done on camera via curl, not code.
  */
 
 import { config, requireRegisteredAgentConfig } from './config.js';
@@ -23,10 +32,8 @@ import {
   getUpcomingCycle,
   enrollInCycle,
   buildFundingInstructions,
-  submitStrategy,
 } from './champzArenaClient.js';
 import { recall } from './memoryClient.js';
-import { reasonAboutStrategy } from './reasoning.js';
 
 async function register() {
   const wallet = await loadOrCreateAcpWallet();
@@ -58,7 +65,7 @@ async function register() {
   console.log(`Execution wallet to fund before the cycle: ${result.execution_wallet}`);
 }
 
-async function runCycle() {
+async function prepCycle() {
   const { apiKey, wallet } = requireRegisteredAgentConfig();
 
   const upcoming = await getUpcomingCycle(apiKey);
@@ -85,12 +92,19 @@ async function runCycle() {
   }
 
   const history = await recall(wallet);
-  const { strategy, rationale } = await reasonAboutStrategy(cycle, history);
 
-  console.log(`Cycle ${cycle.cycle_id} — rationale: ${rationale}`);
+  console.log('\n──────────────────────────────────────────────');
+  console.log(' Paste everything below into Virtuals chat and');
+  console.log(' ask it to reason a strategy, then submit the');
+  console.log(' result with POST /strategy (cycle_id: ' + cycle.cycle_id + ').');
+  console.log('──────────────────────────────────────────────\n');
 
-  const result = await submitStrategy(apiKey, cycle.cycle_id, strategy);
-  console.log('Strategy submitted:', result);
+  console.log('RECALLED MEMORY:');
+  console.log(history.summary);
+  console.log(JSON.stringify(history.entries, null, 2));
+
+  console.log('\nLIVE CYCLE STATE:');
+  console.log(JSON.stringify(cycle, null, 2));
 }
 
 const mode = process.argv[2];
@@ -100,12 +114,12 @@ if (mode === 'register') {
     console.error(err);
     process.exit(1);
   });
-} else if (mode === 'run-cycle') {
-  runCycle().catch((err) => {
+} else if (mode === 'prep-cycle') {
+  prepCycle().catch((err) => {
     console.error(err);
     process.exit(1);
   });
 } else {
-  console.log('Usage: npm run dev -- register | run-cycle');
+  console.log('Usage: npm run dev -- register | prep-cycle');
   process.exit(1);
 }

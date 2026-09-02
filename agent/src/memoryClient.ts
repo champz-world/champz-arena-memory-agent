@@ -7,14 +7,25 @@
 
 import { config } from './config.js';
 
+// Matches GET /my-history's per-cycle shape (see champzArenaClient.ts's
+// MyHistoryCycle) plus the derived roiPct the success metric is built on.
+// Success = ROI on spend (rewardEarned vs totalPaid), NOT win/loss —
+// max_spend_per_cycle / max_price_per_purchase stay fixed across every
+// cycle on purpose, so only the strategy's judgment params are the thing
+// memory should ever be changing.
 export interface CycleMemoryEntry {
   agentId: string;
   cycleId: number;
+  strategy: Record<string, number>; // the 10 submitted strategy params for this cycle
+  totalPaid: number;
+  rewardEarned: number;
+  roiPct: number;
+  won: boolean;
+  holdDurationSeconds: number;
   entryPrice: number | null;
   entryTimingPct: number | null; // 0-100, how far into the cycle we entered
-  outcome: 'won' | 'lost' | 'no_entry';
-  winningPrice: number | null;
-  opponents: string[];
+  competitorCount?: number | null;
+  topCompetitorHoldSeconds?: number | null;
   notes?: string;
 }
 
