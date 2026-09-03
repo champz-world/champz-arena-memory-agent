@@ -28,6 +28,24 @@ Backed by the real Sibyl SDK, `sibyl_memory_hermes.SibylMemoryProvider` — conf
 
 Smoke-tested end to end against the real backend (`POST /remember` then `GET /recall` round-trips correctly, confirmed via `provider.health()` too) — this is genuinely live Sibyl Memory, not a stub. Requires `sibyl init` to have been run once (browser/email sign-in; done 2026-08-17) — the provider auto-loads credentials from `~/.sibyl-memory/credentials.json` by default.
 
+## Two-surface demo architecture (the actual live-demo runtime)
+
+Everything above is the standalone reference implementation — real, tested, capable of running the whole loop unattended. The recorded demo itself runs differently: reasoning and memory operations happen live through **Claude Desktop**, connected to three local MCP servers, instead of the `prep-cycle`/paste-into-Virtuals-chat flow described above.
+
+- **Base MCP** — funds the agent's execution wallet with a real, on-chain transaction, approved by hand in the Base Account app.
+- **`sibyl-memory-mcp`** — Sibyl's own official MCP server (a real installed sibling package to the CLI, not something we built), exposing `memory_remember`, `memory_recall`, `memory_list`, `memory_forget`, `memory_search`, `memory_set_state`, `memory_get_state`, `memory_record_event` directly against the real local Sibyl account.
+- **`champz-arena-readonly`** — a small custom read-only MCP server we built (`arena-ops/champz_arena_readonly_mcp.py` — not in this repo, since it holds a live API key inline, same as the other `arena-ops/` scripts), exposing `get_upcoming_cycle`, `get_cycle_state`, `get_my_history` (filtered to the real data-collection cycles, with a legacy "USDC" mislabeling in the backend's decision text fixed to show the actual token, VIRTUAL), and `get_sibyl_identity` (mirrors the `sibyl whoami` CLI output). Built specifically to cut per-cycle human-relay hops — without it, a human would need to manually copy cycle info from Virtuals chat into Claude Desktop, and copy Claude Desktop's reasoned strategy back to Virtuals chat, up to three times per cycle. With it, only two genuinely load-bearing handoffs remain: Virtuals chat's `enroll` response (the execution wallet address) → Claude Desktop, and Claude Desktop's reasoned strategy → Virtuals chat to submit. Everything else — live cycle state, outcome history — is self-served.
+
+Every *write* action — enroll, submit strategy, withdraw — happens through **Virtuals' own agent chat**, confirmed (from real prior usage) capable of triggering arbitrary curl commands against the arena API. This split is deliberate: it keeps the Virtuals ACP and Base partner integrations visibly, independently verifiable, rather than a wallet quietly signing things inside a script.
+
+### The real break-test: deleting memory for real
+
+Before the "without memory" control cycle, Sibyl was genuinely wiped — `memory_forget` called on the real stored history, then `memory_list` confirmed 0 entities before reasoning proceeded. Worth noting honestly: `memory_forget`'s own tool description says it archives rather than hard-deletes — the body is preserved in an internal table for forensic recovery, just no longer visible via recall/list/search. For every purpose that matters to reasoning (could it see it, recall it, or act on it), it was genuinely gone.
+
+### Real result
+
+Cycle 80 (with memory, real Sibyl recall of cycles 76-79): **11.70x ROI**. Cycle 82 (without memory, genuinely deleted first, reasoned cold): **10.16x ROI**. Both real cycles, run live on Base, identical fixed spend cap in both — the only variable that changed was memory access. Full writeup with data and screenshots: [link TBD].
+
 ## Why two languages instead of one
 
 - The real, current ACP SDK (`@virtuals-protocol/acp-node-v2`) is Node/TypeScript.
@@ -47,7 +65,7 @@ No changes to Champz's production backend or frontend. This agent is purely an e
 - [x] `sibyl-bridge/` smoke-tested locally.
 - [x] LLM provider for the reasoning step — matches the rest of the Champz stack: **OpenRouter** (`https://openrouter.ai/api/v1/chat/completions`), model `moonshotai/kimi-k2.6` with `meta-llama/llama-3.3-70b-instruct` as fallback. (Corrected 2026-08-17 — initially assumed Groq from a name-based misread; the codebase's `GROQ_*` constants are legacy-named but actually point at OpenRouter.)
 - [x] Sibyl SDK programmatic call surface confirmed empirically (2026-08-17): `sibyl_memory_hermes.SibylMemoryProvider` — `remember(category, name, body, *, status=None)`, `recall(category, name)`, `list(category=None, *, status=None, limit=100)`, plus `search`/`archive`/`forget`/`get_state`/`set_state`. `sibyl-bridge/app.py` now calls this directly, no JSON-file stub left.
-- [ ] **Real prerequisite, not code**: register the agent(s) at https://app.virtuals.io/acp/new (Service Registry), add a Signer under each agent's Signers tab to get `ACP_WALLET_ADDRESS` / `ACP_WALLET_ID` / `ACP_SIGNER_PRIVATE_KEY` — account-creation steps on Virtuals' own site.
+- [x] **Real prerequisite, not code — done**: agent registered at https://app.virtuals.io/acp/new (Service Registry), Signer added under the agent's Signers tab for `ACP_WALLET_ADDRESS` / `ACP_WALLET_ID` / `ACP_SIGNER_PRIVATE_KEY`. Its live, real ACP profile is shown on camera in the demo.
 - [x] **Reasoning decision finalized (2026-08-25): manual via Virtuals chat, not a scripted LLM call.** `reasoning.ts`'s placeholder was removed rather than "finished" — there was never a plan to actually call OpenRouter for the hackathon demo, only for a hypothetical later unattended version. Keeping a dead stub around risked reading as unfinished work to a judge inspecting the code; `prep-cycle`'s printed recall + live-state output is the real, load-bearing, used replacement.
-- [ ] Wire a real on-chain transfer for the funding step (Step 6 above) through the ACP provider's `sendTransaction`, instead of printed human instructions — deferred as a "later" item during planning.
+- [x] **Funding — resolved differently than originally planned, but for real.** The reference implementation's `buildFundingInstructions()` (printed human instructions) was never wired up to an automated `sendTransaction` call. Instead, the actual demo funds the execution wallet through **Claude Desktop + Base MCP** — a real on-chain transaction, approved by hand in the Base Account app. See "Two-surface demo architecture" above.
 - [x] **Confirmed (2026-08-25, from real prior usage — not a fresh test): Virtuals chat can read the runbook and trigger arbitrary curl commands.** Already used this way multiple times for enroll + strategy submission. So the reasoning beat is a single seamless action: paste recalled memory + live cycle state in, it reasons **and** calls `POST /strategy` itself — no manual curl handoff needed. Strongest possible version of the demo's most heavily-weighted judged beat (memory load-bearing, 40%).
