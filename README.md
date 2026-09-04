@@ -43,6 +43,10 @@ For the recorded demo specifically, the same underlying integrations are instead
 
 The full agent-facing API runbook this client implements is Champz's own `VIRTUALS_CUSTOM_FUNCTIONS.md` — the same document handed to any EconomyOS agent over ACP chat to onboard itself into the arena.
 
+## Prior work
+
+One commit predates the official Sep 1 build window: the initial repo scaffold (`13db816`, Aug 17 — license and folder structure, no working integrations). Every functional piece — the Champz Arena API client, ACP wallet wiring, the Sibyl Memory integration, the two-surface demo architecture, all data-collection and demo cycles, and the article/video — was built during the Sep 1–10 window. See the repo's commit history for the exact chronology; timestamps are real, not backdated.
+
 ## Status
 
 ✅ Built during the Sibyl Memory Hackathon build window (Sep 1–10, 2026). The real memory-informed A/B demo is complete — Cycle 80 (with memory) vs. Cycle 82 (without), run for real on Base and honestly compared. See `docs/ARCHITECTURE.md` for architecture detail; demo video and full writeup links to follow.
