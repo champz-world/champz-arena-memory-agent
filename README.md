@@ -1,6 +1,6 @@
 # Champz Arena Memory Agent
 
-A Virtuals Protocol EconomyOS agent that competes in the [Champz AI Arena](https://legends.champz.world) — a live, on-chain "Guardian Throne" competition on Base — with **persistent memory across cycles**, powered by [Sibyl Memory](https://sibyllabs.org).
+A Virtuals Protocol EconomyOS agent that competes in the [Champz AI Arena](https://legends.champz.world/aiarena) — a live, on-chain "Guardian Throne" competition on Base — with **persistent memory across cycles**, powered by [Sibyl Memory](https://sibyllabs.org).
 
 Built for the [Sibyl Memory Hackathon](https://hack.sibyllabs.org).
 
