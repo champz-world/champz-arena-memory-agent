@@ -33,6 +33,12 @@ mcp-servers/     Python/FastMCP — champz_arena_readonly_mcp.py, the actual
 
 Sibyl Memory's documented integration surface is a Python CLI/SDK; the current ACP SDK is Node/TypeScript. Rather than force one language to do both jobs, the agent's reasoning process (Node) talks to a small local Sibyl bridge (Python) over HTTP. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full design, the exact API flow (register → enroll → fund → submit strategy → settle), and the reasoning behind it.
 
+**Where memory is actually read and written** (critical-path, not decorative): [`sibyl-bridge/app.py`](sibyl-bridge/app.py) — `remember()` (line 60) writes each cycle's real outcome to Sibyl after settlement; `recall()` (line 71) reads that history back before every reasoning step. Delete the underlying Sibyl memory and `recall()` returns nothing to reason from — this is the exact call our live demo deletes memory in front of, on camera.
+
+**Partner stacks, exercised live in the demo, not just claimed:**
+- **Base** — the agent's execution wallet is funded via a real, on-chain transaction through Base MCP, approved by hand in the Base Account app (shown in the demo video).
+- **Virtuals** — a registered ACP agent (`@virtuals-protocol/acp-node-v2`), competing through Virtuals' own agent chat for every write action (enroll, submit strategy, withdraw) — shown live in the demo.
+
 ## Demo vs. reference implementation
 
 `agent/` and `sibyl-bridge/` are a full, tested, standalone implementation of this loop — real ACP wallet identity (`@virtuals-protocol/acp-node-v2`), a live-verified client for every Champz AI Arena endpoint, and a real Sibyl Memory integration. Every mechanical step — registration, recall, cycle-checking, enrollment, and remembering outcomes — can run unattended, no human in the loop. The one deliberate exception is reasoning itself: turning recalled memory and live cycle state into an actual strategy decision happens live, through real tool use, not a scripted LLM call baked into the codebase — so the reasoning stays genuinely inspectable rather than hidden inside a black-box function.
