@@ -1,6 +1,6 @@
 # Champz Arena Memory Agent
 
-A Virtuals Protocol EconomyOS agent that competes in the [Champz AI Arena](https://legends.champz.world) — a live, on-chain "Guardian Throne" competition on Base — with **persistent memory across cycles**, powered by [Sibyl Memory](https://sibyllabs.org).
+A Virtuals Protocol EconomyOS agent that competes in the [Champz AI Arena](https://legends.champz.world/aiarena) — a live, on-chain "Guardian Throne" competition on Base — with **persistent memory across cycles**, powered by [Sibyl Memory](https://sibyllabs.org).
 
 Built for the [Sibyl Memory Hackathon](https://hack.sibyllabs.org).
 
@@ -25,15 +25,19 @@ agent/          Node/TypeScript — ACP wallet identity + signing
                  client, LLM-driven reasoning loop
 sibyl-bridge/    Python/FastAPI — thin wrapper around the Sibyl Memory
                  SDK, exposing /remember and /recall over local HTTP
+mcp-servers/     Python/FastMCP — champz_arena_readonly_mcp.py, the actual
+                 read-only MCP server used in the live demo (API key now
+                 read from an env var instead of hardcoded, so it's safe
+                 to publish)
 ```
 
 Sibyl Memory's documented integration surface is a Python CLI/SDK; the current ACP SDK is Node/TypeScript. Rather than force one language to do both jobs, the agent's reasoning process (Node) talks to a small local Sibyl bridge (Python) over HTTP. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full design, the exact API flow (register → enroll → fund → submit strategy → settle), and the reasoning behind it.
 
 ## Demo vs. reference implementation
 
-`agent/` and `sibyl-bridge/` are a full, tested, standalone implementation of this entire loop — real ACP wallet identity (`@virtuals-protocol/acp-node-v2`), a live-verified client for every Champz AI Arena endpoint, and a real Sibyl Memory integration — capable of running the whole thing unattended, no human in the loop.
+`agent/` and `sibyl-bridge/` are a full, tested, standalone implementation of this loop — real ACP wallet identity (`@virtuals-protocol/acp-node-v2`), a live-verified client for every Champz AI Arena endpoint, and a real Sibyl Memory integration. Every mechanical step — registration, recall, cycle-checking, enrollment, and remembering outcomes — can run unattended, no human in the loop. The one deliberate exception is reasoning itself: turning recalled memory and live cycle state into an actual strategy decision happens live, through real tool use, not a scripted LLM call baked into the codebase — so the reasoning stays genuinely inspectable rather than hidden inside a black-box function.
 
-For the recorded demo specifically, the same underlying integrations are instead driven live, on camera, through two real partner products rather than a background script: **Claude Desktop** — connected to Base MCP for funding, Sibyl's own official `sibyl-memory-mcp` server for `memory_remember`/`memory_recall`/`memory_list`/`memory_forget` (directly against the same real Sibyl account this repo's bridge talks to), and a small custom read-only MCP server we built for live cycle-state and outcome-history lookups — handles memory and reasoning; **Virtuals' own agent chat** handles every write action (check cycle, enroll, submit, withdraw). Same registered ACP wallet, same arena API, same Sibyl account either way — the demo just makes the integration watchable and independently verifiable by routing it through the partner products themselves instead of hiding it inside a script. Full technical detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#two-surface-demo-architecture-the-actual-live-demo-runtime).
+For the recorded demo specifically, the same underlying integrations are instead driven live, on camera, through two real partner products rather than a background script: **Claude Desktop** — connected to Base MCP for funding, Sibyl's own official `sibyl-memory-mcp` server for `memory_remember`/`memory_recall`/`memory_list`/`memory_forget` (directly against the same real Sibyl account this repo's bridge talks to), and [`mcp-servers/champz_arena_readonly_mcp.py`](mcp-servers/champz_arena_readonly_mcp.py), a small custom read-only MCP server we built for live cycle-state and outcome-history lookups — handles memory and reasoning; **Virtuals' own agent chat** handles every write action (check cycle, enroll, submit, withdraw). Same registered ACP wallet, same arena API, same Sibyl account either way — the demo just makes the integration watchable and independently verifiable by routing it through the partner products themselves instead of hiding it inside a script. Full technical detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#two-surface-demo-architecture-the-actual-live-demo-runtime).
 
 ## Reference
 
